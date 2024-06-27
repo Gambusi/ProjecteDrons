@@ -30,19 +30,22 @@ def arm (button):
 
 
 def takeoff ():
-    global dron, takeOffBtn
+    global dron, takeOffBtn, alcada
     global alt_entry
     try:
         # altura de despeque prefijada
-        alt = 8
+        alt = float(alcada)
         # llamo en modo no bloqueante y le indico qué función debe activar al acabar la operación, y qué parámetro debe usar
         dron.takeOff (alt, blocking=False,  callback=informar, params='VOLANDO')
         # mientras despego pongo el boton en amarillo
         takeOffBtn['bg'] = 'yellow'
         takeOffBtn['text'] = 'Despegando....'
-    except:
+    except ValueError:
         # en el cuadro de texto no hay ningún numero
-        messagebox.showerror("error", "Introducela altura para el despegue")
+        messagebox.showerror("error", "Introduce un número válido para la altura del despegue")
+    except Exception as e:
+        # cualquier otro error
+        messagebox.showerror("error", f"Ocurrió un error: {e}")
 
 
 # esta es la función que se activará cuando acaben las funciones no bloqueantes (despegue y RTL)
@@ -96,6 +99,11 @@ def RTL():
 
 # ====== NAVIGATION FUNCTIONS ======
 # Esta función se activa cada vez que cambiamos la velocidad de navegación con el slider
+def set_alcada(alcadaFixada):
+    global alcada
+    alcada = float(alcadaFixada)
+
+
 def change_speed (speed):
     global dron
     dron.changeNavSpeed(float(speed))
@@ -111,10 +119,10 @@ def go(direction):
 # ================= DASHBOARD INICIAL =================
 def crear_ventana():
     global dron
-    global  altShowLbl, headingShowLbl,  speedSldr, gradesSldr, speedShowLbl
+    global altShowLbl, headingShowLbl, alcSldr, speedSldr, gradesSldr, speedShowLbl, alcada
     global takeOffBtn, connectBtn, armBtn, takeOffBtn, RTLBtn
     global alt_entry
-
+    alcada = float(10)
     dron = Dron()
 
     ventana = tk.Tk()
@@ -134,7 +142,7 @@ def crear_ventana():
     controlFrame.rowconfigure(3, weight=1)
     controlFrame.rowconfigure(4, weight=1)
     controlFrame.rowconfigure(5, weight=1)
-
+    controlFrame.rowconfigure(6, weight=1)
 
     controlFrame.columnconfigure(0, weight=1)
 
@@ -148,11 +156,19 @@ def crear_ventana():
                        command=lambda: arm(armBtn))
     armBtn.grid(row=1, column=0, padx=5, pady=5, sticky=tk.N + tk.S + tk.E + tk.W)
 
+    #Oscar: Afegeixo un slider per l'alçada del takeoff
+    
+    alcSldr = tk.Scale(controlFrame, label="Altitut (m):", resolution=1, from_=5, to=20, tickinterval=5,
+                         orient=tk.HORIZONTAL, command=set_alcada)
+    
+    alcSldr.set(alcada) # alçada per defecte de 10 m
+    alcSldr.grid(row=2, column=0, padx=5, pady=5, sticky=tk.N + tk.S + tk.E + tk.W)
+
     takeOffBtn = tk.Button(controlFrame, text="Despegar", bg="dark orange", command=takeoff)
-    takeOffBtn.grid(row=2, column=0,  padx=5, pady=5, sticky=tk.N + tk.S + tk.E + tk.W)
+    takeOffBtn.grid(row=3, column=0,  padx=5, pady=5, sticky=tk.N + tk.S + tk.E + tk.W)
 
     RTLBtn = tk.Button(controlFrame, text="RTL", bg="dark orange", command=RTL)
-    RTLBtn.grid(row=3, column=0, padx=5, pady=5, sticky=tk.N + tk.S + tk.E + tk.W)
+    RTLBtn.grid(row=4, column=0, padx=5, pady=5, sticky=tk.N + tk.S + tk.E + tk.W)
 
 
 # ================= FRAME/BOTONES NAVEGACIÓN =================
@@ -160,10 +176,10 @@ def crear_ventana():
     speedSldr = tk.Scale(controlFrame, label="Velocidad (m/s):", resolution=1, from_=0, to=20, tickinterval=5,
                          orient=tk.HORIZONTAL, command=change_speed)
     speedSldr.set(1) # velocidad por defecto de 1 m/s
-    speedSldr.grid(row=4, column=0, padx=5, pady=5, sticky=tk.N + tk.S + tk.E + tk.W)
+    speedSldr.grid(row=5, column=0, padx=5, pady=5, sticky=tk.N + tk.S + tk.E + tk.W)
 
     navFrame = tk.LabelFrame (controlFrame, text = "Navegación")
-    navFrame.grid(row=5, column=0, padx=50, pady=5, sticky=tk.N + tk.S + tk.E + tk.W)
+    navFrame.grid(row=6, column=0, padx=50, pady=5, sticky=tk.N + tk.S + tk.E + tk.W)
 
     # Configuración del Frame de Navegación
     navFrame.rowconfigure(0, weight=1)
@@ -221,7 +237,7 @@ def crear_ventana():
     # Configuración del Frame de usuario: el usuario puede añadir/quitar filas y columnas como prefiera
     userFrame.rowconfigure(0, weight=1)
     userFrame.rowconfigure(1, weight=1)
-    userFrame.rowconfigure(2, weight=1)
+    userFrame.rowconfigure(2, weight=1) 
     userFrame.rowconfigure(3, weight=1)
     userFrame.rowconfigure(4, weight=1)
     userFrame.rowconfigure(5, weight=1)
